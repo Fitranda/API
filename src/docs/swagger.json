@@ -1,0 +1,83 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Frenz API",
+    "version": "1.0.0",
+    "description": "Dokumentasi API untuk Sistem Manajemen Frens"
+  },
+  "host": "localhost:5000",
+  "schemes": ["http"],
+  "paths": {
+    "/api/pegawai": {
+      "get": {
+        "summary": "Get all pegawai",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/peran": {
+      "get": {
+        "summary": "Get all peran",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "summary": "Menambahkan peran baru",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "nama": {
+                  "type": "string"
+                }
+              },
+              "required": ["nama"]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Peran berhasil ditambahkan"
+          }
+        }
+      },
+      "put": {
+        "summary": "Memperbarui peran yang sudah ada",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "nama": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "nama"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Peran berhasil diperbarui"
+          }
+        }
+      }
+    }
+  }
+}
