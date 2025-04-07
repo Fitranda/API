@@ -7,14 +7,21 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+const multer = require("multer");
+const upload = multer();
+
+app.use(upload.any())
 // Import routes
 const pegawaiRoutes = require("./src/routes/pegawaiRoutes");
 const peranRoutes = require("./src/routes/peranRoutes");
+const employeeRoutes = require("./src/routes/employeeRoutes");
 
 // Gunakan routes
 app.use("/api/pegawai", pegawaiRoutes);
 app.use("/api/peran", peranRoutes);
+app.use("/api/employee", employeeRoutes);
 
 // Swagger Documentation
 const swaggerUi = require("swagger-ui-express");
