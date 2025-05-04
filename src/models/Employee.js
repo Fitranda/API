@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 class Employee {
   static getEmployee(search, callback) {
@@ -145,6 +146,51 @@ FROM Employee WHERE status = 1
     });
   }
 
+  static updateEmployee(employeeId, data, callback) {
+    const fields = [];
+    const values = [];
+    const params = [];
+
+    if (data.employeeName) {
+      fields.push("employeeName = ?");
+      params.push(data.employeeName);
+    }
+    if (data.address) {
+      fields.push("address = ?");
+      params.push(data.address);
+    }
+    if (data.contact) {
+      fields.push("contact = ?");
+      params.push(data.contact);
+    }
+    if (data.username) {
+      fields.push("username = ?");
+      params.push(data.username);
+    }
+    if (data.password) {
+      fields.push("password = ?");
+      params.push(bcrypt.hashSync(data.password, 10));
+    }
+    if (data.role) {
+      fields.push("role = ?");
+      params.push(data.role);
+    }
+    if (data.storename) {
+      fields.push("storename = ?");
+      params.push(data.storename);
+    }
+
+    const query = `UPDATE Employee SET ${fields.join(", ")} WHERE employeeId = ?`;
+    params.push(employeeId);
+
+    db.query(query, params, (err, result) => {
+      if (err) {
+        return callback(err, null);
+      }
+      return callback(null, result);
+    });
+  }
+
   static login(username, password, callback) {
     const query = "SELECT * FROM Employee WHERE username = ? AND status = 1";
     db.query(query, [username], (err, results) => {
@@ -159,7 +205,15 @@ FROM Employee WHERE status = 1
       if (!isPasswordValid) {
         return callback(null, { success: false, message: "Invalid password" });
       }
-      return callback(null, { success: true, employee });
+      // Generate JWT token
+      const token = jwt.sign(
+        { employeeId: employee.employeeId, username: employee.username },
+        "05052025", // Replace with a secure secret key
+        { expiresIn: "5h" } // Token expires in 1 hour
+      );
+      console.log("Token:", token);
+      
+      return callback(null, { success: true, employee, token });
     });
   }
 

@@ -63,7 +63,7 @@ async function createEmployee(req, res) {
     }
 
     // Create employee
-    Employee.createEmployee(req.body, (err, newEmployee) => {
+    Employee.CreateEmployee(req.body, (err, newEmployee) => {
       if (err)
         return res
           .status(500)
@@ -181,7 +181,7 @@ async function loginEmployee(req, res) {
       }
       res
         .status(200)
-        .json({ message: "Login successful", employee: result.employee });
+        .json({ message: "Login successful", employee: result.employee,token : result.token });
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
