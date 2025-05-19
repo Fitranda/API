@@ -31,13 +31,13 @@ async function CreateProduct(req, res) {
         message: "Nama supplier harus diisi dan maksimal 255 karakter",
       });
     }
-    if (price ) {
+    if (!price ) {
       return res
         .status(400)
         .json({ message: "Harga tidak boleh kosong" });
     }
 
-    if (stock) {
+    if (!stock) {
       return res
         .status(400)
         .json({ message: "Stok tidak boleh kosong" });
