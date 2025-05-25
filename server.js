@@ -9,27 +9,21 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const multer = require("multer");
-const upload = multer();
-
-app.use(upload.any())
 // Import routes
-const pegawaiRoutes = require("./src/routes/pegawaiRoutes");
-const peranRoutes = require("./src/routes/peranRoutes");
 const employeeRoutes = require("./src/routes/employeeRoutes");
 const supplierRoutes = require("./src/routes/supplierRoutes");
 const productRoutes = require("./src/routes/productRoutes");
 const purchaseRoutes = require("./src/routes/purchaseRoutes");
-const saleRoutes = require("./src/routes/saleRoutes.js")
+const saleRoutes = require("./src/routes/saleRoutes.js");
+const attendanceRoutes = require("./src/routes/attendanceRoutes.js");
 
 // Gunakan routes
-app.use("/api/pegawai", pegawaiRoutes);
-app.use("/api/peran", peranRoutes);
 app.use("/api/employee", employeeRoutes);
 app.use("/api/supplier", supplierRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/purchase", purchaseRoutes);
 app.use("/api/sale", saleRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 // Swagger Documentation
 const swaggerUi = require("swagger-ui-express");

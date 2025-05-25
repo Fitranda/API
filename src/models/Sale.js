@@ -2,20 +2,30 @@ const db = require("../config/db");
 
 class Sale {
   static getSale(search, callback) {
-    let query = `SELECT 
-    e.saleDetailId,e.productId,e.quantity,e.price,e.subtotal as subtotaldetail,
-    a.saleId,a.invoice,a.employeeId,a.date,a.subtotal,a.discount,a.total,a.payment,a.change,
-    b.employeeName,d.productName FROM saledetail e
-    Left Join sale a on a.saleId = e.saleId
-    Left Join employee b on a.employeeId = b.employeeId
-    Left Join product d on e.productId = d.productId
-    WHERE true`;
+    let query = `
+      SELECT 
+        a.saleId AS id,
+        a.invoice,
+        a.employeeId,
+        b.employeeName,
+        a.date,
+        a.method,
+        a.subtotal,
+        a.discount,
+        a.total,
+        a.payment,
+        a.change
+      FROM sale a
+      LEFT JOIN employee b ON a.employeeId = b.employeeId
+      WHERE TRUE
+    `;
 
-    let params = [];
+    const params = [];
 
     if (search.date) {
-      query += " AND a.date between ?";
-      params.push(`${search.date} 00:00:00 AND ${search.date} 23:59:59`);
+      // Assuming search.date is a single date, filter between start and end of that date
+      query += ` AND a.date BETWEEN ? AND ?`;
+      params.push(`${search.date} 00:00:00`, `${search.date} 23:59:59`);
     }
 
     if (search.employeeName) {
@@ -23,101 +33,209 @@ class Sale {
       params.push(`%${search.employeeName}%`);
     }
 
-    if (search.productName) {
-      query += " AND d.productName LIKE ?";
-      params.push(`%${search.productName}%`);
-    }
-
     if (search.invoice) {
       query += " AND a.invoice LIKE ?";
       params.push(`%${search.invoice}%`);
     }
 
+    query += " ORDER BY a.date DESC, a.saleId DESC";
+
     db.query(query, params, callback);
   }
 
+  static getSaleDetail(saleId, callback) {
+    // First, get the sale information
+    const saleQuery = `
+      SELECT 
+        a.saleId AS id,
+        a.invoice,
+        a.employeeId,
+        b.employeeName,
+        a.date,
+        a.method,
+        a.subtotal,
+        a.discount,
+        a.total,
+        a.payment,
+        a.change
+      FROM sale a
+      LEFT JOIN employee b ON a.employeeId = b.employeeId
+      WHERE a.saleId = ?
+    `;
+
+    db.query(saleQuery, [saleId], (err, saleResults) => {
+      if (err) {
+        return callback(err, null);
+      }
+
+      if (saleResults.length === 0) {
+        return callback(null, null);
+      }
+
+      const sale = saleResults[0];
+
+      // Then, get the sale details
+      const detailQuery = `
+        SELECT 
+          c.saleDetailId,
+          c.productId,
+          d.productName,
+          c.quantity,
+          c.price,
+          c.subtotal
+        FROM saledetail c
+        LEFT JOIN product d ON c.productId = d.productId
+        WHERE c.saleId = ?
+        ORDER BY c.saleDetailId
+      `;
+
+      db.query(detailQuery, [saleId], (detailErr, detailResults) => {
+        if (detailErr) {
+          return callback(detailErr, null);
+        }
+
+        // Combine sale and details
+        sale.details = detailResults || [];
+
+        callback(null, sale);
+      });
+    });
+  }
+
   static CreateSale(data, callback) {
+    const {
+      invoice,
+      employeeId,
+      date,
+      method,
+      subtotal,
+      discount,
+      total,
+      payment,
+      change,
+      details, // pastikan ini 'details' (jamak)
+    } = data;
+
+    // Susun query insert sale
     const fields = [];
     const values = [];
     const params = [];
 
-    const detail = data.detail;
-    
-
-    if (data.invoice) {
+    if (invoice) {
       fields.push("invoice");
       values.push("?");
-      params.push(data.invoice);
+      params.push(invoice);
     }
-
-    if (data.employeeId) {
+    if (employeeId) {
       fields.push("employeeId");
       values.push("?");
-      params.push(data.employeeId);
+      params.push(employeeId);
     }
-    if (data.date) {
+    if (date) {
       fields.push("date");
       values.push("?");
-      params.push(data.date);
+      params.push(date);
     }
-    if (data.subtotal) {
+    if (method) {
+      fields.push("method");
+      values.push("?");
+      params.push(method);
+    }
+    if (subtotal) {
       fields.push("subtotal");
       values.push("?");
-      params.push(data.subtotal);
+      params.push(subtotal);
     }
-    if (data.discount) {
+    if (discount) {
       fields.push("discount");
       values.push("?");
-      params.push(data.discount);
+      params.push(discount);
     }
-    if (data.total) {
+    if (total) {
       fields.push("total");
       values.push("?");
-      params.push(data.total);
+      params.push(total);
     }
-    if (data.payment) {
+    if (payment) {
       fields.push("payment");
       values.push("?");
-      params.push(data.payment);
+      params.push(payment);
     }
-    if (data.change) {
+    if (change) {
       fields.push("`change`");
       values.push("?");
-      params.push(data.change);
+      params.push(change);
     }
 
-    const query = `INSERT INTO sale (${fields.join(
+    const insertSaleQuery = `INSERT INTO sale (${fields.join(
       ", "
     )}) VALUES (${values.join(", ")})`;
 
-    db.query(query, params, (err, result) => {
-      if (err) {
-        return callback(err, null);
+    // Mulai transaksi
+    db.beginTransaction((transactionErr) => {
+      if (transactionErr) {
+        return callback(transactionErr, null);
       }
-      if (Array.isArray(detail) && detail && detail.length > 0) {
-        const detailQuery = `
-          INSERT INTO saledetail (saleId, productId, quantity, price, subtotal)
-          VALUES (?, ?, ?, ?, ?)
-        `;
-        
 
-        detail.forEach((item) => {
-          const detailParams = [
-            result.insertId,
-            item.productId,
-            item.quantity,
-            item.price,
-            item.subtotal,
-          ];
-          db.query(detailQuery, detailParams, (err) => {
-            if (err) {
-              console.error("Error inserting sale detail:", err);
+      db.query(insertSaleQuery, params, (insertErr, result) => {
+        if (insertErr) {
+          return db.rollback(() => {
+            callback(insertErr, null);
+          });
+        }
+
+        const saleId = result.insertId;
+
+        if (!Array.isArray(details) || details.length === 0) {
+          // Tidak ada details, commit dan return
+          return db.commit((commitErr) => {
+            if (commitErr) {
+              return db.rollback(() => callback(commitErr, null));
             }
+            const newData = { id: saleId, ...data };
+            callback(null, newData);
+          });
+        }
+
+        // Insert details satu per satu dengan Promise untuk menunggu semua selesai
+        const detailInsertPromises = details.map((item) => {
+          return new Promise((resolve, reject) => {
+            const detailQuery = `
+              INSERT INTO saledetail (saleId, productId, quantity, price, subtotal)
+              VALUES (?, ?, ?, ?, ?)
+            `;
+            const detailParams = [
+              saleId,
+              item.productId,
+              item.quantity,
+              item.price,
+              item.subtotal,
+            ];
+            db.query(detailQuery, detailParams, (detailErr) => {
+              if (detailErr) {
+                return reject(detailErr);
+              }
+              resolve();
+            });
           });
         });
-      }
-      const newData = { saleId: result.insertId, ...data };
-      return callback(null, newData);
+
+        Promise.all(detailInsertPromises)
+          .then(() => {
+            db.commit((commitErr) => {
+              if (commitErr) {
+                return db.rollback(() => callback(commitErr, null));
+              }
+              const newData = { id: saleId, ...data };
+              callback(null, newData);
+            });
+          })
+          .catch((detailInsertErr) => {
+            db.rollback(() => {
+              callback(detailInsertErr, null);
+            });
+          });
+      });
     });
   }
 }
