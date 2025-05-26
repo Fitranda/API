@@ -19,11 +19,7 @@ async function getProduct(req, res) {
 // Create a new employee
 async function CreateProduct(req, res) {
   try {
-    const {
-      productName,
-      price,
-      stock
-    } = req.body;
+    const { productName, price, stock } = req.body;
 
     // Validation
     if (!productName || productName.length > 255) {
@@ -42,7 +38,6 @@ async function CreateProduct(req, res) {
         .status(400)
         .json({ message: "Stok tidak boleh kosong" });
     }
-    
 
     // Create employee
     Product.CreateProduct(req.body, (err, newProduct) => {
@@ -61,21 +56,15 @@ async function CreateProduct(req, res) {
 async function updateProduct(req, res) {
   try {
     const { id } = req.params;
-    const {
-      productName,
-      price,
-      stock
-    } = req.body;
+    const { productName, price, stock } = req.body;
 
     // Validation
     if (productName && productName.length > 255) {
-      return res
-        .status(400)
-        .json({
-          message: "Nama produk maksimal 255 karakter",
-        });
+      return res.status(400).json({
+        message: "Nama produk maksimal 255 karakter",
+      });
     }
-   
+
     Product.updateProduct(id, req.body, (err, result) => {
       if (err)
         return res
@@ -108,7 +97,6 @@ async function deleteProduct(req, res) {
     res.status(500).json({ message: error.message });
   }
 }
-
 
 module.exports = {
   getProduct,

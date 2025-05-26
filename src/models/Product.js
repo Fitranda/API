@@ -69,9 +69,7 @@ class Product {
       return callback(new Error("No fields to update"), null);
     }
 
-    const query = `UPDATE product SET ${fields.join(
-      ", "
-    )} WHERE productId = ?`;
+    const query = `UPDATE product SET ${fields.join(", ")} WHERE productId = ?`;
     params.push(productId);
 
     db.query(query, params, (err, result) => {
@@ -85,7 +83,7 @@ class Product {
   static deleteProduct(employeeId, callback) {
     const queryCheckUsage = `
       SELECT 
-        (SELECT COUNT(*) FROM Purchasedetail WHERE productId = ?) AS purchaseCount
+        (SELECT COUNT(*) FROM Purchasedetail WHERE productId = ?) AS purchaseCount,
         (SELECT COUNT(*) FROM saledetail WHERE productId = ?) AS saleCount
     `;
 
@@ -103,7 +101,8 @@ class Product {
         if (purchaseCount > 0 || saleCount > 0) {
           // Jika digunakan, update status menjadi 2
           return callback(err, {
-            message: "Cannot delete product because they have made purchases or sales",
+            message:
+              "Cannot delete product because they have made purchases or sales",
           });
         } else {
           // Jika tidak digunakan, hapus permanen
