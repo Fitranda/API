@@ -14,7 +14,8 @@ class Sale {
         a.discount,
         a.total,
         a.payment,
-        a.change
+        a.change,
+        a.proofQris
       FROM sale a
       LEFT JOIN employee b ON a.employeeId = b.employeeId
       WHERE TRUE
@@ -57,7 +58,8 @@ class Sale {
         a.discount,
         a.total,
         a.payment,
-        a.change
+        a.change,
+        a.proofQris
       FROM sale a
       LEFT JOIN employee b ON a.employeeId = b.employeeId
       WHERE a.saleId = ?
@@ -165,6 +167,11 @@ class Sale {
       fields.push("`change`");
       values.push("?");
       params.push(change);
+    }
+    if (data.proofQris) {
+      fields.push("proofQris");
+      values.push("?");
+      params.push(data.proofQris);
     }
 
     const insertSaleQuery = `INSERT INTO sale (${fields.join(
