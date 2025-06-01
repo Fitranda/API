@@ -16,6 +16,7 @@ const productRoutes = require("./src/routes/productRoutes");
 const purchaseRoutes = require("./src/routes/purchaseRoutes");
 const saleRoutes = require("./src/routes/saleRoutes.js");
 const attendanceRoutes = require("./src/routes/attendanceRoutes.js");
+const swaggerUi = require("swagger-ui-express");
 
 // Gunakan routes
 app.use("/api/employee", employeeRoutes);

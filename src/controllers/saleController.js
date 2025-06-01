@@ -1,4 +1,5 @@
 const Sale = require("../models/Sale");
+const { imageUpload } = require("../utils/imagekit");
 
 // Get all sales (with optional filters)
 async function getSale(req, res) {
@@ -53,40 +54,51 @@ async function createSale(req, res) {
       date,
       method,
       subtotal,
-      discountPercent, // baru: diskon dalam persen dari frontend
+      discountPercent,
       total,
       payment,
       change,
       details,
     } = req.body;
 
-    // Validasi input
-    if (!invoice) {
-      return res.status(400).json({ message: "Invoice harus diisi" });
+    // Validate
+    if (!invoice || !employeeId || !date || !method) {
+      return res.status(400).json({ message: "Missing required fields" });
     }
-    if (!employeeId) {
-      return res.status(400).json({ message: "Employee ID harus diisi" });
+
+    if (!Array.isArray(details)) {
+      try {
+        details = JSON.parse(details); // In case details sent as JSON string
+      } catch {
+        return res.status(400).json({ message: "Invalid details format" });
+      }
     }
-    if (!date) {
-      return res.status(400).json({ message: "Tanggal harus diisi" });
-    }
-    if (!method) {
-      return res.status(400).json({ message: "Metode pembayaran harus diisi" });
-    }
+
     if (!Array.isArray(details) || details.length === 0) {
-      return res.status(400).json({ message: "Pilih produk terlebih dahulu" });
+      return res.status(400).json({ message: "Details cannot be empty" });
     }
-    if (
-      typeof discountPercent !== "number" ||
-      discountPercent < 0 ||
-      discountPercent > 100
-    ) {
+
+    if (typeof discountPercent !== "number") {
+      discountPercent = parseFloat(discountPercent) || 0;
+    }
+
+    if (discountPercent < 0 || discountPercent > 100) {
       discountPercent = 0;
     }
 
     const discount = (subtotal * discountPercent) / 100;
-
     total = subtotal - discount;
+
+    let proofQris = null;
+    if (req.file) {
+      try {
+        proofQris = await imageUpload(req.file); // imagekit upload
+      } catch (uploadErr) {
+        return res
+          .status(500)
+          .json({ message: "Error uploading QRIS proof", error: uploadErr });
+      }
+    }
 
     const saleData = {
       invoice,
@@ -99,6 +111,7 @@ async function createSale(req, res) {
       payment,
       change,
       details,
+      proofQris,
     };
 
     Sale.CreateSale(saleData, (err, newSale) => {
