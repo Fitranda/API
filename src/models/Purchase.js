@@ -1,10 +1,9 @@
 const db = require("../config/db");
 
-class Purchase {
-  static getPurchase(search, callback) {
+class Purchase {  static getPurchase(search, callback) {
     let query = `SELECT 
     e.purchaseDetailId,e.productId,e.quantity,e.price,e.subtotal as subtotaldetail,
-    a.purchaseId,a.invoice,a.employeeId,a.supplierId,a.date,a.subtotal,a.discount,a.total,
+    a.purchaseId,a.invoice,a.employeeId,a.supplierId,a.date,a.subtotal,a.discount,a.total,a.status,
     b.employeeName,c.supplierName,d.productName FROM purchasedetail e
     Left Join purchase a on a.purchaseId = e.purchaseId
     Left Join employee b on a.employeeId = b.employeeId
@@ -32,11 +31,14 @@ class Purchase {
     if (search.productName) {
       query += " AND d.productName LIKE ?";
       params.push(`%${search.productName}%`);
-    }
-
-    if (search.invoice) {
+    }    if (search.invoice) {
       query += " AND a.invoice LIKE ?";
       params.push(`%${search.invoice}%`);
+    }
+
+    if (search.status) {
+      query += " AND a.status = ?";
+      params.push(search.status);
     }
 
     db.query(query, params, callback);
@@ -79,11 +81,15 @@ class Purchase {
       fields.push("discount");
       values.push("?");
       params.push(data.discount);
-    }
-    if (data.total) {
+    }    if (data.total) {
       fields.push("total");
       values.push("?");
       params.push(data.total);
+    }
+    if (data.status) {
+      fields.push("status");
+      values.push("?");
+      params.push(data.status);
     }
 
     const query = `INSERT INTO purchase (${fields.join(
@@ -115,10 +121,49 @@ class Purchase {
             }
           });
         });
-      }
-      const newData = { purchaseId: result.insertId, ...data };
+      }      const newData = { purchaseId: result.insertId, ...data };
       return callback(null, newData);
     });
+  }
+
+  // Get purchase by ID for approval
+  static getPurchaseById(purchaseId, callback) {
+    const query = `SELECT 
+      a.purchaseId, a.invoice, a.employeeId, a.supplierId, a.date, 
+      a.subtotal, a.discount, a.total, a.status,
+      b.employeeName, c.supplierName
+      FROM purchase a
+      LEFT JOIN employee b ON a.employeeId = b.employeeId
+      LEFT JOIN supplier c ON a.supplierId = c.supplierId
+      WHERE a.purchaseId = ?`;
+    
+    db.query(query, [purchaseId], callback);
+  }
+
+  // Approve purchase with supplier assignment
+  static approvePurchase(purchaseId, supplierId, callback) {
+    const query = `UPDATE purchase SET status = 'Approve', supplierId = ? WHERE purchaseId = ?`;
+    db.query(query, [supplierId, purchaseId], callback);
+  }
+
+  // Reject purchase
+  static rejectPurchase(purchaseId, callback) {
+    const query = `UPDATE purchase SET status = 'Reject' WHERE purchaseId = ?`;
+    db.query(query, [purchaseId], callback);
+  }
+
+  // Get pending purchases for supervisor
+  static getPendingPurchases(callback) {
+    const query = `SELECT 
+      a.purchaseId, a.invoice, a.employeeId, a.date, 
+      a.subtotal, a.discount, a.total, a.status,
+      b.employeeName
+      FROM purchase a
+      LEFT JOIN employee b ON a.employeeId = b.employeeId
+      WHERE a.status = 'Pending'
+      ORDER BY a.date DESC`;
+    
+    db.query(query, callback);
   }
 }
 
