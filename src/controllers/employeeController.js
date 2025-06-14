@@ -212,6 +212,66 @@ async function loginEmployee(req, res) {
   }
 }
 
+// Get notifications for dashboard
+async function getNotifications(req, res) {
+  try {
+    Employee.getNotifications((err, results) => {
+      if (err) {
+        res.status(500).json({ message: "Error fetching notifications", error: err });
+        return;
+      }
+      res.json(results);
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+// Get today's transactions detail
+async function getTodayTransactions(req, res) {
+  try {
+    Employee.getTodayTransactions((err, results) => {
+      if (err) {
+        res.status(500).json({ message: "Error fetching today's transactions", error: err });
+        return;
+      }
+      res.json(results);
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+// Get low stock products
+async function getLowStockProducts(req, res) {
+  try {
+    Employee.getLowStockProducts((err, results) => {
+      if (err) {
+        res.status(500).json({ message: "Error fetching low stock products", error: err });
+        return;
+      }
+      res.json(results);
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+// Get pending purchases
+async function getPendingPurchasesNotification(req, res) {
+  try {
+    Employee.getPendingPurchases((err, results) => {
+      if (err) {
+        res.status(500).json({ message: "Error fetching pending purchases", error: err });
+        return;
+      }
+      res.json(results);
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
 module.exports = {
   getEmployee,
   getEmployeeById,
@@ -219,4 +279,8 @@ module.exports = {
   updateEmployee,
   deleteEmployee,
   loginEmployee,
+  getNotifications,
+  getTodayTransactions,
+  getLowStockProducts,
+  getPendingPurchasesNotification,
 };

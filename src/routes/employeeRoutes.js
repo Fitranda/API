@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const employeeController = require("../controllers/employeeController");
 const authenticateToken = require("../middlewares/auth");
+const { notificationCache } = require("../middlewares/notificationCache");
 const multer = require("multer");
 
 const upload = multer();
@@ -26,5 +27,11 @@ router.put(
 
 router.delete("/:id", authenticateToken, employeeController.deleteEmployee);
 router.post("/login", employeeController.loginEmployee);
+
+// Notification routes with caching
+router.get("/notifications/summary", authenticateToken, notificationCache, employeeController.getNotifications);
+router.get("/notifications/transactions/today", authenticateToken, notificationCache, employeeController.getTodayTransactions);
+router.get("/notifications/products/low-stock", authenticateToken, notificationCache, employeeController.getLowStockProducts);
+router.get("/notifications/purchases/pending", authenticateToken, notificationCache, employeeController.getPendingPurchasesNotification);
 
 module.exports = router;

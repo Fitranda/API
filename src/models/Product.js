@@ -81,30 +81,30 @@ class Product {
   }
 
   static deleteProduct(employeeId, callback) {
-    const queryCheckUsage = `
-      SELECT 
-        (SELECT COUNT(*) FROM Purchasedetail WHERE productId = ?) AS purchaseCount,
-        (SELECT COUNT(*) FROM saledetail WHERE productId = ?) AS saleCount
-    `;
+    // const queryCheckUsage = `
+    //   SELECT 
+    //     (SELECT COUNT(*) FROM Purchasedetail WHERE productId = ?) AS purchaseCount,
+    //     (SELECT COUNT(*) FROM saledetail WHERE productId = ?) AS saleCount
+    // `;
 
-    db.query(
-      queryCheckUsage,
-      [employeeId, employeeId, employeeId],
-      (err, results) => {
-        if (err) {
-          return callback(err, null);
-        }
+    // db.query(
+    //   queryCheckUsage,
+    //   [employeeId, employeeId, employeeId],
+    //   (err, results) => {
+    //     if (err) {
+    //       return callback(err, null);
+    //     }
 
-        const usage = results[0];
-        const { purchaseCount } = usage;
+    //     const usage = results[0];
+    //     const { purchaseCount } = usage;
 
-        if (purchaseCount > 0 || saleCount > 0) {
-          // Jika digunakan, update status menjadi 2
-          return callback(err, {
-            message:
-              "Cannot delete product because they have made purchases or sales",
-          });
-        } else {
+    //     if (purchaseCount > 0 || saleCount > 0) {
+    //       // Jika digunakan, update status menjadi 2
+    //       return callback(err, {
+    //         message:
+    //           "Cannot delete product because they have made purchases or sales",
+    //       });
+    //     } else {
           // Jika tidak digunakan, hapus permanen
           const queryDelete = "DELETE FROM product WHERE productId = ?";
           db.query(queryDelete, [employeeId], (err, result) => {
@@ -113,9 +113,9 @@ class Product {
             }
             return callback(null, { message: "Product deleted permanently" });
           });
-        }
-      }
-    );
+      //   }
+      // }
+    // );
   }
 }
 

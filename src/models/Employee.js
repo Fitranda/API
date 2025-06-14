@@ -256,13 +256,110 @@ class Employee {
       return callback(null, { success: true, employee, token });
     });
   }
-
   static logout(callback) {
     // Logic untuk logout (bergantung pada implementasi token/session)
     return callback(null, {
       success: true,
       message: "Logged out successfully",
     });
+  }
+
+  // Get notifications for dashboard
+  static getNotifications(callback) {
+    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    const query = `
+      SELECT 
+        'transaction' as type,
+        'Transaksi hari ini' as title,
+        CONCAT(COUNT(*), ' transaksi tercatat hari ini') as message,
+        COUNT(*) as count,
+        '${today}' as date
+      FROM sale 
+      WHERE DATE(date) = '${today}'
+      
+      UNION ALL
+      
+      SELECT 
+        'low_stock' as type,
+        'Stok rendah' as title,
+        CONCAT(COUNT(*), ' produk dengan stok di bawah 5') as message,
+        COUNT(*) as count,
+        CURDATE() as date
+      FROM product 
+      WHERE stock < 5
+      
+      UNION ALL
+      
+      SELECT 
+        'purchase_pending' as type,
+        'Purchase pending' as title,
+        CONCAT(COUNT(*), ' purchase menunggu approval') as message,
+        COUNT(*) as count,
+        CURDATE() as date
+      FROM purchase 
+      WHERE status = 'Pending'
+    `;
+
+    db.query(query, callback);
+  }
+
+  // Get today's transactions detail
+  static getTodayTransactions(callback) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const query = `
+      SELECT 
+        s.saleId,
+        s.invoice,
+        s.date,
+        s.total,
+        e.employeeName,
+        COUNT(sd.saleDetailId) as itemCount
+      FROM sale s
+      LEFT JOIN employee e ON s.employeeId = e.employeeId
+      LEFT JOIN saledetail sd ON s.saleId = sd.saleId
+      WHERE DATE(s.date) = ?
+      GROUP BY s.saleId, s.invoice, s.date, s.total, e.employeeName
+      ORDER BY s.date DESC
+    `;
+
+    db.query(query, [today], callback);
+  }
+
+  // Get low stock products
+  static getLowStockProducts(callback) {
+    const query = `
+      SELECT 
+        productId,
+        productName,
+        stock,
+        price
+      FROM product 
+      WHERE stock < 5
+      ORDER BY stock ASC, productName ASC
+    `;
+
+    db.query(query, callback);
+  }
+
+  // Get pending purchases
+  static getPendingPurchases(callback) {
+    const query = `
+      SELECT 
+        p.purchaseId,
+        p.invoice,
+        p.date,
+        p.total,
+        e.employeeName,
+        p.status
+      FROM purchase p
+      LEFT JOIN employee e ON p.employeeId = e.employeeId
+      WHERE p.status = 'Pending'
+      ORDER BY p.date DESC
+    `;
+
+    db.query(query, callback);
   }
 }
 
