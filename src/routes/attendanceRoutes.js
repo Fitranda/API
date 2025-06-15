@@ -1,18 +1,19 @@
 const express = require("express");
 const router = express.Router();
-const saleController = require("../controllers/saleController");
+const attendanceController = require("../controllers/attendanceController");
 const authenticateToken = require("../middlewares/auth");
 const multer = require("multer");
 
 const upload = multer();
 
-router.get("/", authenticateToken, saleController.getSale);
-router.get("/:id", authenticateToken, saleController.getSaleDetail);
+// Routes
+router.get("/", authenticateToken, attendanceController.getAttendance);
+
 router.post(
   "/",
   authenticateToken,
-  upload.single("proofQris"),
-  saleController.createSale
+  upload.single("photo"),
+  attendanceController.createAttendance
 );
 
 module.exports = router;

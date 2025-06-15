@@ -5,6 +5,7 @@ const supplierDocs = require("./supplier");
 const productDocs = require("./product");
 const purchaseDocs = require("./purchase");
 const saleDocs = require("./sale");
+const attedanceDocs = require("./attedance");
 
 module.exports = {
   openapi: "3.0.0",
@@ -36,6 +37,7 @@ module.exports = {
     ...productDocs,
     ...purchaseDocs,
     ...saleDocs,
+    ...attedanceDocs,
     // ...pegawaiDocs,
     // ...peranDocs,
   },

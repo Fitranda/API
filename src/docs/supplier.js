@@ -87,11 +87,51 @@ module.exports = {
         },
         500: {
           description: "Error creating supplier",
-        },
-      },
+        },      },
     },
   },
   "/api/supplier/{id}": {
+    get: {
+      tags: ["Supplier"],
+      summary: "Get supplier by ID",
+      description: "Retrieve a specific supplier by their ID.",
+      security: [
+        {
+          BearerAuth: [],
+        },
+      ],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          description: "ID of the supplier to retrieve",
+          required: true,
+          schema: {
+            type: "integer",
+          },
+        },
+      ],
+      responses: {
+        200: {
+          description: "Supplier retrieved successfully",
+          content: {
+            "application/json": {
+              example: {
+                supplierId: 1,
+                supplierName: "John Doe",
+                contact: "1234567890",
+              },
+            },
+          },
+        },
+        404: {
+          description: "Supplier not found",
+        },
+        500: {
+          description: "Error fetching supplier",
+        },
+      },
+    },
     put: {
       tags: ["Supplier"],
       summary: "Update an supplier",

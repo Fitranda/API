@@ -1,7 +1,6 @@
 const db = require("../config/db");
 
-class Supplier {
-  static getSupplier(search, callback) {
+class Supplier {  static getSupplier(search, callback) {
     let query = `SELECT supplierId,supplierName,contact FROM supplier WHERE true`;
 
     let params = [];
@@ -17,6 +16,11 @@ class Supplier {
     }
 
     db.query(query, params, callback);
+  }
+
+  static getSupplierById(supplierId, callback) {
+    const query = `SELECT supplierId, supplierName, contact FROM supplier WHERE supplierId = ?`;
+    db.query(query, [supplierId], callback);
   }
 
   static CreateSupplier(data, callback) {
@@ -77,8 +81,7 @@ class Supplier {
       return callback(null, { message: "Supplier updated successfully" });
     });
   }
-
-  static deleteSupplier(employeeId, callback) {
+  static deleteSupplier(supplierId, callback) {
     const queryCheckUsage = `
       SELECT 
         (SELECT COUNT(*) FROM Purchase WHERE supplierId = ?) AS purchaseCount
@@ -86,7 +89,7 @@ class Supplier {
 
     db.query(
       queryCheckUsage,
-      [employeeId, employeeId, employeeId],
+      [supplierId],
       (err, results) => {
         if (err) {
           return callback(err, null);
@@ -96,14 +99,14 @@ class Supplier {
         const { purchaseCount } = usage;
 
         if (purchaseCount > 0) {
-          // Jika digunakan, update status menjadi 2
-          return callback(err, {
+          // Jika digunakan, tidak bisa dihapus
+          return callback(null, {
             message: "Cannot delete supplier because they have made purchases",
           });
         } else {
           // Jika tidak digunakan, hapus permanen
           const queryDelete = "DELETE FROM supplier WHERE supplierId = ?";
-          db.query(queryDelete, [employeeId], (err, result) => {
+          db.query(queryDelete, [supplierId], (err, result) => {
             if (err) {
               return callback(err, null);
             }

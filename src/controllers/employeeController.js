@@ -1,5 +1,5 @@
 const Employee = require("../models/Employee");
-
+const { imageUpload } = require("../utils/imagekit");
 // Get all employees
 async function getEmployee(req, res) {
   try {
@@ -10,6 +10,27 @@ async function getEmployee(req, res) {
         return;
       }
       res.json(results);
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+// Get employee by ID
+async function getEmployeeById(req, res) {
+  try {
+    const { id } = req.params;
+
+    Employee.getEmployeeById(id, (err, employee) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ message: "Error fetching employee", error: err });
+      }
+      if (!employee) {
+        return res.status(404).json({ message: "Employee not found" });
+      }
+      res.status(200).json(employee);
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -28,6 +49,11 @@ async function createEmployee(req, res) {
       role,
       storename,
     } = req.body;
+
+    let profilePicture = null;
+    if (req.file) {
+      profilePicture = await imageUpload(req.file);
+    }
 
     // Validation
     if (!employeeName || employeeName.length > 255) {
@@ -62,8 +88,18 @@ async function createEmployee(req, res) {
       return res.status(400).json({ message: "Peran harus diisi" });
     }
 
-    // Create employee
-    Employee.CreateEmployee(req.body, (err, newEmployee) => {
+    const employeeData = {
+      employeeName,
+      address,
+      contact,
+      username,
+      password,
+      role,
+      storename,
+      profilePicture,
+    };
+
+    Employee.CreateEmployee(employeeData, (err, newEmployee) => {
       if (err)
         return res
           .status(500)
@@ -89,43 +125,29 @@ async function updateEmployee(req, res) {
       storename,
     } = req.body;
 
-    // Validation
-    if (!employeeName || employeeName.length > 255) {
-      return res
-        .status(400)
-        .json({
-          message: "Nama pegawai harus diisi dan maksimal 255 karakter",
-        });
+    let photoUrl = null;
+    if (req.file) {
+      photoUrl = await imageUpload(req.file);
     }
-    if (contact && contact.length > 20) {
-      return res
-        .status(400)
-        .json({ message: "Kontak pegawai tidak boleh lebih dari 20 karakter" });
-    }
-    if (!username || username.length > 100) {
-      return res
-        .status(400)
-        .json({ message: "Username harus diisi dan maksimal 100 karakter" });
-    }
+
+    // Prepare updated data
+    const updatedData = {
+      employeeName,
+      address,
+      contact,
+      username,
+      role,
+      storename,
+    };
+
     if (password) {
-      if (password.length < 8) {
-        return res
-          .status(400)
-          .json({ message: "Password harus diisi dan minimal 8 karakter" });
-      }
-      const passwordRegex =
-        /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
-      if (!passwordRegex.test(password)) {
-        return res.status(400).json({
-          message:
-            "Password harus mengandung setidaknya satu huruf besar, satu angka, dan satu simbol",
-        });
-      }
+      updatedData.password = password;
     }
-    if (!role) {
-      return res.status(400).json({ message: "Peran harus diisi" });
+    if (photoUrl) {
+      updatedData.profilePicture = photoUrl;
     }
-    Employee.updateEmployee(id, req.body, (err, result) => {
+
+    Employee.updateEmployee(id, updatedData, (err, result) => {
       if (err)
         return res
           .status(500)
@@ -158,7 +180,7 @@ async function deleteEmployee(req, res) {
   }
 }
 
-async function loginEmployee(req, res) {    
+async function loginEmployee(req, res) {
   try {
     const { username, password } = req.body;
 
@@ -166,7 +188,7 @@ async function loginEmployee(req, res) {
     if (!username || !password) {
       return res
         .status(400)
-        .json({ message: "Username dan password harus diisi"+req.body });
+        .json({ message: "Username dan password harus diisi" + req.body });
     }
 
     // Login
@@ -179,9 +201,71 @@ async function loginEmployee(req, res) {
       if (!result.success) {
         return res.status(401).json({ message: result.message });
       }
-      res
-        .status(200)
-        .json({ message: "Login successful", employee: result.employee,token : result.token });
+      res.status(200).json({
+        message: "Login successful",
+        employee: result.employee,
+        token: result.token,
+      });
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+// Get notifications for dashboard
+async function getNotifications(req, res) {
+  try {
+    Employee.getNotifications((err, results) => {
+      if (err) {
+        res.status(500).json({ message: "Error fetching notifications", error: err });
+        return;
+      }
+      res.json(results);
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+// Get today's transactions detail
+async function getTodayTransactions(req, res) {
+  try {
+    Employee.getTodayTransactions((err, results) => {
+      if (err) {
+        res.status(500).json({ message: "Error fetching today's transactions", error: err });
+        return;
+      }
+      res.json(results);
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+// Get low stock products
+async function getLowStockProducts(req, res) {
+  try {
+    Employee.getLowStockProducts((err, results) => {
+      if (err) {
+        res.status(500).json({ message: "Error fetching low stock products", error: err });
+        return;
+      }
+      res.json(results);
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+// Get pending purchases
+async function getPendingPurchasesNotification(req, res) {
+  try {
+    Employee.getPendingPurchases((err, results) => {
+      if (err) {
+        res.status(500).json({ message: "Error fetching pending purchases", error: err });
+        return;
+      }
+      res.json(results);
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -190,8 +274,13 @@ async function loginEmployee(req, res) {
 
 module.exports = {
   getEmployee,
+  getEmployeeById,
   createEmployee,
   updateEmployee,
   deleteEmployee,
   loginEmployee,
+  getNotifications,
+  getTodayTransactions,
+  getLowStockProducts,
+  getPendingPurchasesNotification,
 };
