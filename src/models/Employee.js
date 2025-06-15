@@ -181,53 +181,55 @@ class Employee {
     );
   }
 
-  static updateEmployee(employeeId, data, callback) {
+  static updateEmployee(id, data, callback) {
     const fields = [];
-    const params = [];
+    const values = [];
 
     if (data.employeeName) {
       fields.push("employeeName = ?");
-      params.push(data.employeeName);
+      values.push(data.employeeName);
     }
     if (data.address) {
       fields.push("address = ?");
-      params.push(data.address);
+      values.push(data.address);
     }
     if (data.contact) {
       fields.push("contact = ?");
-      params.push(data.contact);
+      values.push(data.contact);
     }
     if (data.username) {
       fields.push("username = ?");
-      params.push(data.username);
-    }
-    if (data.password) {
-      fields.push("password = ?");
-      params.push(bcrypt.hashSync(data.password, 10));
+      values.push(data.username);
     }
     if (data.role) {
       fields.push("role = ?");
-      params.push(data.role);
+      values.push(data.role);
     }
     if (data.storename) {
       fields.push("storename = ?");
-      params.push(data.storename);
+      values.push(data.storename);
     }
     if (data.profilePicture) {
       fields.push("profilePicture = ?");
-      params.push(data.profilePicture);
+      values.push(data.profilePicture);
+    }
+
+    if (fields.length === 0) {
+      return callback(new Error("No fields to update"), null);
     }
 
     const query = `UPDATE Employee SET ${fields.join(
       ", "
     )} WHERE employeeId = ?`;
-    params.push(employeeId);
+    values.push(id);
 
-    db.query(query, params, (err, result) => {
+    db.query(query, values, (err, result) => {
       if (err) {
-        return callback(err, null);
+        console.error("MySQL Update Error:", err);
+        callback(err, null);
+      } else {
+        callback(null, result);
       }
-      return callback(null, result);
     });
   }
 
@@ -266,8 +268,8 @@ class Employee {
 
   // Get notifications for dashboard
   static getNotifications(callback) {
-    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    
+    const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+
     const query = `
       SELECT 
         'transaction' as type,
@@ -306,8 +308,8 @@ class Employee {
 
   // Get today's transactions detail
   static getTodayTransactions(callback) {
-    const today = new Date().toISOString().split('T')[0];
-    
+    const today = new Date().toISOString().split("T")[0];
+
     const query = `
       SELECT 
         s.saleId,

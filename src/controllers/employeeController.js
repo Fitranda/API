@@ -147,16 +147,25 @@ async function updateEmployee(req, res) {
       updatedData.profilePicture = photoUrl;
     }
 
-    Employee.updateEmployee(id, updatedData, (err, result) => {
-      if (err)
-        return res
-          .status(500)
-          .json({ message: "Error updating employee", error: err });
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: "Employee not found" });
-      }
-      res.status(200).json({ message: "Employee updated successfully" });
-    });
+    try {
+      Employee.updateEmployee(id, updatedData, (err, result) => {
+        if (err) {
+          console.error("Update employee error:", err);
+          return res
+            .status(500)
+            .json({ message: "Error updating employee", error: err });
+        }
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ message: "Employee not found" });
+        }
+
+        res.status(200).json({ message: "Employee updated successfully" });
+      });
+    } catch (error) {
+      console.error("Unexpected failure:", error);
+      res.status(500).json({ message: "Unexpected error", error });
+    }
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -217,7 +226,9 @@ async function getNotifications(req, res) {
   try {
     Employee.getNotifications((err, results) => {
       if (err) {
-        res.status(500).json({ message: "Error fetching notifications", error: err });
+        res
+          .status(500)
+          .json({ message: "Error fetching notifications", error: err });
         return;
       }
       res.json(results);
@@ -232,7 +243,9 @@ async function getTodayTransactions(req, res) {
   try {
     Employee.getTodayTransactions((err, results) => {
       if (err) {
-        res.status(500).json({ message: "Error fetching today's transactions", error: err });
+        res
+          .status(500)
+          .json({ message: "Error fetching today's transactions", error: err });
         return;
       }
       res.json(results);
@@ -247,7 +260,9 @@ async function getLowStockProducts(req, res) {
   try {
     Employee.getLowStockProducts((err, results) => {
       if (err) {
-        res.status(500).json({ message: "Error fetching low stock products", error: err });
+        res
+          .status(500)
+          .json({ message: "Error fetching low stock products", error: err });
         return;
       }
       res.json(results);
@@ -262,7 +277,9 @@ async function getPendingPurchasesNotification(req, res) {
   try {
     Employee.getPendingPurchases((err, results) => {
       if (err) {
-        res.status(500).json({ message: "Error fetching pending purchases", error: err });
+        res
+          .status(500)
+          .json({ message: "Error fetching pending purchases", error: err });
         return;
       }
       res.json(results);
